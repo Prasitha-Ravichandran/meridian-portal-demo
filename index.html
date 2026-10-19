@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meridian Policyholder Portal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the 4-screen Figma flow as a working app (split login, centered card flow with stepper), plus a fixed tester bar to switch seeded defects on and off. */
+:root{
+  --bg:#F4F7FA; --surface:#FFFFFF; --ink:#0F1B2D; --muted:#5B6B80; --line:#C5CFDB;
+  --navy:#0F2A4A; --teal:#2BB39A; --danger:#D92D20; --danger-bg:#FEF3F2; --danger-line:#FDA29B; --danger-ink:#B42318;
+  --field-bg:#FFFFFF; --disabled-bg:#EEF2F6; --btn-bg:#0F2A4A; --btn-ink:#FFFFFF; --link:#1D6FD8;
+  --ok-bg:#E8F7F3; --ok-ink:#0B6B58; --bar-bg:#0F2A4A; --bar-ink:#DCE5F0;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1522; --surface:#122033; --ink:#E6EDF6; --muted:#97A7BC; --line:#2C3E55;
+  --danger:#F97066; --danger-bg:#3A1714; --danger-line:#7A2A24; --danger-ink:#FDA29B;
+  --field-bg:#0E1A2B; --disabled-bg:#1A2A40; --btn-bg:#2BB39A; --btn-ink:#06231D; --link:#6FB0FF;
+  --ok-bg:#12332D; --ok-ink:#7FE0C8; --bar-bg:#08111C; --bar-ink:#B9C7D9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1522; --surface:#122033; --ink:#E6EDF6; --muted:#97A7BC; --line:#2C3E55;
+  --danger:#F97066; --danger-bg:#3A1714; --danger-line:#7A2A24; --danger-ink:#FDA29B;
+  --field-bg:#0E1A2B; --disabled-bg:#1A2A40; --btn-bg:#2BB39A; --btn-ink:#06231D; --link:#6FB0FF;
+  --ok-bg:#12332D; --ok-ink:#7FE0C8; --bar-bg:#08111C; --bar-ink:#B9C7D9; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px));padding-bottom:84px}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--link)}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border-bottom:1px solid var(--line);
+  padding:14px max(16px,env(safe-area-inset-left,0px)) 14px max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;color:var(--ink)}
+.mark{width:34px;height:34px;border-radius:8px;background:var(--teal);color:#fff;display:grid;place-items:center;font-weight:700}
+.user{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500}
+.avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;display:block}
+
+/* login split */
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);min-height:calc(100vh - 150px)}
+.hero{position:relative;background:var(--navy);color:#fff;overflow:hidden;min-height:520px}
+.hero svg.scene{position:absolute;inset:0;width:100%;height:100%}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,42,74,.88),rgba(15,42,74,.35) 70%)}
+.hero .copy{position:relative;padding:48px 40px}
+.hero h2{font-size:34px;line-height:1.18;margin:0 0 14px;max-width:11em;text-wrap:balance}
+.hero p{margin:0;color:#C9D6E6;max-width:26em}
+.loginwrap{display:grid;place-items:center;padding:32px max(16px,env(safe-area-inset-left,0px))}
+.loginform{width:100%;max-width:400px}
+h1{font-size:28px;line-height:1.2;margin:0 0 6px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 20px}
+
+/* fields */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;min-width:0}
+.field label,.lbl{font-size:14px;font-weight:600}
+.req{color:var(--danger)}
+.ctl{width:100%;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--field-bg);padding:0 14px;outline-offset:0}
+textarea.ctl{height:auto;min-height:96px;padding:12px 14px;resize:vertical}
+select.ctl{appearance:auto}
+.ctl::placeholder{color:#94A3B8}
+.ctl:disabled,.ctl[readonly]{background:var(--disabled-bg);color:var(--muted);cursor:not-allowed}
+.field.invalid .ctl,.field.invalid .drop{border-color:var(--danger);box-shadow:0 0 0 1px var(--danger)}
+.help{margin:0;font-size:12.5px;color:var(--muted)}
+.field.invalid .help{color:var(--danger)}
+.pw{position:relative}
+.pw .ctl{padding-right:44px}
+.pw button{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;background:none;color:var(--muted);cursor:pointer;border-radius:6px;font-size:12px;font-weight:600}
+.counter{align-self:flex-end;font-size:12px;color:var(--muted)}
+
+.btn{height:48px;padding:0 24px;border-radius:8px;border:1px solid transparent;font-weight:600;cursor:pointer;background:var(--btn-bg);color:var(--btn-ink)}
+.btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn.full{width:100%}
+.alert{display:flex;gap:10px;align-items:flex-start;background:var(--danger-bg);border:1px solid var(--danger-line);color:var(--danger-ink);
+  border-radius:8px;padding:12px 14px;margin-bottom:16px;font-weight:600;font-size:14px}
+.row-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;font-size:14px}
+.row-links span{color:var(--muted)}
+
+/* flow screens */
+.flow{max-width:1040px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-left,0px)) 40px}
+.stepper{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 24px;font-size:14px;color:var(--muted)}
+.st{display:flex;align-items:center;gap:8px}
+.dot{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:600;background:var(--surface)}
+.st.done .dot{background:var(--teal);border-color:var(--teal);color:#fff}
+.st.cur .dot{background:var(--navy);border-color:var(--navy);color:#fff}
+.st.cur{color:var(--ink);font-weight:600}
+.bar{width:36px;height:2px;background:var(--line)}
+.bar.done{background:var(--teal)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:28px}
+.card h2{margin:0 0 20px;font-size:22px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:20px}
+.actions{display:flex;justify-content:space-between;gap:12px;margin-top:8px}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.side img,.side .ph{display:block;width:100%;height:150px;object-fit:cover;border-radius:8px;background:var(--disabled-bg);font-size:13px;color:var(--muted)}
+.side h3{margin:12px 4px 4px;font-size:16px}
+.side p{margin:0 4px 6px;color:var(--muted);font-size:14px}
+
+/* upload */
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:22px;text-align:center;background:var(--field-bg);cursor:pointer}
+.drop strong{display:block;margin-bottom:4px}
+.drop span{color:var(--muted);font-size:13px}
+.types{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.types i{font-style:normal;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;background:var(--disabled-bg);color:var(--muted)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.chip{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--surface)}
+.chip .thumb{width:48px;height:48px;border-radius:8px;overflow:hidden;flex:none}
+.chip .nm{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:600;font-size:14px}
+.chip .nm small{display:block;color:var(--muted);font-weight:400}
+.chip button{border:0;background:none;color:var(--link);cursor:pointer;font-weight:600}
+
+/* success */
+.done-card{max-width:520px;margin:24px auto 0;text-align:center}
+.done-card .check{width:84px;height:84px;margin:0 auto 18px}
+.ref{display:inline-block;background:var(--ok-bg);color:var(--ok-ink);border-radius:6px;padding:4px 10px;font-weight:600;font-size:13px;margin:6px 0 20px}
+
+/* tester bar */
+.tbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bar-bg);color:var(--bar-ink);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  font-size:13px;border-top:1px solid #1d3552}
+.tbar-in{max-width:1040px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid #3a5272;border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--bar-ink);padding:7px 12px;cursor:pointer;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--teal);color:#06231D}
+.tbar details{flex:1;min-width:200px}
+.tbar summary{cursor:pointer;font-weight:600}
+.key{position:absolute;left:0;right:0;bottom:100%;background:var(--bar-bg);padding:14px max(16px,env(safe-area-inset-left,0px));max-height:60vh;overflow:auto;border-top:1px solid #1d3552}
+.key ol{margin:8px auto 0;padding-left:20px;max-width:1040px}
+.key li{margin:4px 0}
+.tbar code{background:#1d3552;padding:1px 6px;border-radius:4px}
+
+@media (max-width:820px){
+  .split{grid-template-columns:1fr}.hero{min-height:260px}.hero .copy{padding:28px 20px}.hero h2{font-size:26px}
+  .layout{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.card{padding:20px}
+  .side{order:-1}.side img,.side .ph{height:110px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+[hidden]{display:none!important}img{max-width:100%}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+
+<div class="tbar" id="tbar">
+  <div class="tbar-in">
+    <span>Test mode</span>
+    <div class="seg" role="group" aria-label="Test mode">
+      <button type="button" id="m-clean" aria-pressed="false">Clean build</button>
+      <button type="button" id="m-bug" aria-pressed="true">Seeded defects</button>
+    </div>
+    <details id="keywrap">
+      <summary>Answer key and test login</summary>
+      <div class="key" id="key"></div>
+    </details>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ---------- seeded defects ---------- */
+  var DEFECTS=[
+    ['Screen 2','Street field is missing from Policy Details (design has 8 fields, page shows 7).'],
+    ['Screen 2','The support agent photo does not load, so only the alt text shows. Same on the Upload screen.'],
+    ['Screen 2','Label spelling: "Polcy Number" instead of "Policy Number".'],
+    ['Screen 3','Stepper spelling: "Uplaod" instead of "Upload".'],
+    ['Screen 4','Success spelling: "Submision recieved" instead of "Submission received".'],
+    ['Screen 1','Boundary: Username accepts 5 characters and up to 25 (rule is 6 to 20).'],
+    ['Screen 2','Boundary: Zip Code accepts 6 digits (rule is exactly 5).'],
+    ['Screen 2','Date of Birth accepts a future date, and Age can be typed into.'],
+    ['Screen 2','Sub Category is enabled before a Category is chosen and shows every option.'],
+    ['Screen 3','Boundary: files up to 12 MB are accepted (limit is 10 MB). Comments accept up to 520 characters (limit is 500).']
+  ];
+  var CATS={Auto:['Collision','Comprehensive','Liability'],Home:['Dwelling','Contents','Flood'],Life:['Term','Whole life'],Health:['Individual','Family'],Travel:['Domestic','International']};
+  var ALLSUB=[];Object.keys(CATS).forEach(function(k){CATS[k].forEach(function(s){ALLSUB.push(s)})});
+
+  var bug=true;
+  try{var sv=localStorage.getItem('mpp-bug');if(sv!==null)bug=sv==='1'}catch(e){}
+  if(location.hash==='#clean')bug=false;
+  var st={step:1,u:'',p:'',policy:'',address:'',street:'',zip:'',dob:'',age:'',cat:'',sub:'',file:null,comments:''};
+  var $=function(s,r){return (r||document).querySelector(s)};
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+
+  /* ---------- art (inline SVG, no external images) ---------- */
+  var HERO='<svg class="scene" viewBox="0 0 560 832" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2A4A"/><stop offset="1" stop-color="#2BB39A"/></linearGradient></defs><rect width="560" height="832" fill="url(#hg)"/><circle cx="430" cy="140" r="50" fill="#FFD678"/><rect y="640" width="560" height="192" fill="#1E5A50"/><rect x="120" y="440" width="320" height="240" fill="#EBF0F5"/><polygon points="90,450 280,310 470,450" fill="#BE3C3C"/><rect x="250" y="540" width="60" height="140" fill="#0F2A4A"/><rect x="160" y="480" width="70" height="60" fill="#96C8E6"/><rect x="350" y="480" width="70" height="60" fill="#96C8E6"/><circle cx="170" cy="725" r="13" fill="#E0AC8C"/><rect x="156" y="740" width="34" height="50" rx="10" fill="#0F2A4A"/><circle cx="345" cy="730" r="12" fill="#BE8C6E"/><rect x="331" y="744" width="32" height="48" rx="10" fill="#2BB39A"/></svg>';
+  var AVATAR='<svg class="avatar" viewBox="0 0 40 40" aria-label="Alex Morgan"><rect width="40" height="40" fill="#B4CBE4"/><ellipse cx="20" cy="38" rx="14" ry="12" fill="#0F2A4A"/><circle cx="20" cy="16" r="7" fill="#E0AC8C"/><path d="M12.5 15a7.5 7.5 0 0 1 15 0c-3-3-12-3-15 0z" fill="#3C281E"/></svg>';
+  var AGENT_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 160"><rect width="248" height="160" fill="#CFEDE6"/><ellipse cx="124" cy="170" rx="50" ry="62" fill="#2BB39A"/><circle cx="124" cy="62" r="26" fill="#BE8C6E"/><path d="M98 58a26 24 0 0 1 52 0c-10-9-42-9-52 0z" fill="#1E1919"/><rect x="88" y="52" width="9" height="20" rx="4" fill="#0F2A4A"/><rect x="151" y="52" width="9" height="20" rx="4" fill="#0F2A4A"/></svg>';
+  var AGENT_URI='data:image/svg+xml;utf8,'+encodeURIComponent(AGENT_SVG);
+  var CHECK='<svg class="check" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="40" fill="#E8F7F3" stroke="#2BB39A" stroke-width="2"/><path d="M26 43l11 11 21-23" fill="none" stroke="#2BB39A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var FILEICON='<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect width="48" height="48" fill="#DCEBFA"/><polygon points="-6,48 18,24 32,40 40,30 54,48" fill="#468270"/><circle cx="36" cy="12" r="5" fill="#FFD678"/></svg>';
+
+  /* ---------- helpers ---------- */
+  function field(id,label,o){
+    o=o||{};
+    var ctl;
+    var common=' id="'+id+'" name="'+id+'" data-testid="'+id+'"'+(o.disabled?' disabled':'')+(o.readonly?' readonly':'');
+    if(o.kind==='select'){
+      ctl='<select class="ctl"'+common+'><option value="">'+esc(o.ph)+'</option>'+(o.opts||[]).map(function(x){return '<option value="'+esc(x)+'"'+(o.val===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select>';
+    }else if(o.kind==='textarea'){
+      ctl='<textarea class="ctl"'+common+' placeholder="'+esc(o.ph||'')+'">'+esc(o.val||'')+'</textarea>';
+    }else if(o.kind==='password'){
+      ctl='<div class="pw"><input class="ctl" type="password"'+common+' placeholder="'+esc(o.ph||'')+'" autocomplete="off" value="'+esc(o.val||'')+'"><button type="button" id="pw-toggle" aria-label="Show password">Show</button></div>';
+    }else{
+      ctl='<input class="ctl" type="text"'+common+' placeholder="'+esc(o.ph||'')+'" autocomplete="off" value="'+esc(o.val||'')+'">';
+    }
+    return '<div class="field" data-field="'+id+'"><label for="'+id+'">'+esc(label)+(o.req===false?'':'<span class="req"> *</span>')+'</label>'+ctl+
+      '<p class="help" id="'+id+'-help" data-help="'+esc(o.help||'')+'">'+esc(o.help||'')+'</p>'+(o.extra||'')+'</div>';
+  }
+  function setErr(id,msg){
+    var f=$('[data-field="'+id+'"]');if(!f)return true;
+    var h=$('#'+id+'-help');
+    if(msg){f.classList.add('invalid');h.textContent=msg;h.setAttribute('role','alert');f.querySelector('.ctl,.drop')&&f.querySelector('.ctl,.drop').setAttribute('aria-invalid','true')}
+    else{f.classList.remove('invalid');h.textContent=h.getAttribute('data-help');h.removeAttribute('role');var c=f.querySelector('.ctl,.drop');c&&c.removeAttribute('aria-invalid')}
+    return !msg;
+  }
+  function bind(id,key,after){
+    var el=$('#'+id);if(!el)return;
+    el.addEventListener('input',function(){st[key]=el.value;after&&after(el)});
+    el.addEventListener('blur',function(){V[id]&&setErr(id,V[id]())});
+  }
+  function firstBad(ids){
+    var ok=true,first=null;
+    ids.forEach(function(id){var m=V[id]();setErr(id,m);if(m&&ok){ok=false;first=id}});
+    if(first){var e=$('#'+first);e&&e.focus&&e.focus()}
+    return ok;
+  }
+
+  /* ---------- validators (spec in the user story) ---------- */
+  function realDate(s){
+    var m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);if(!m)return null;
+    var mo=+m[1],d=+m[2],y=+m[3],dt=new Date(y,mo-1,d);
+    if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d)return null;
+    return dt;
+  }
+  function ageOf(dt){var n=new Date(),a=n.getFullYear()-dt.getFullYear();var m=n.getMonth()-dt.getMonth();if(m<0||(m===0&&n.getDate()<dt.getDate()))a--;return a}
+  var V={
+    u:function(){var v=st.u.trim();if(!v)return'Enter your username';var re=bug?/^[A-Za-z][A-Za-z0-9._]{4,24}$/:/^[A-Za-z][A-Za-z0-9._]{5,19}$/;
+      return re.test(v)?'':'Username must be 6 to 20 characters, start with a letter and use letters, digits, dot or underscore'},
+    p:function(){var v=st.p;if(!v)return'Enter your password';return v.length<8?'Password must be at least 8 characters':''},
+    policy:function(){var v=st.policy.trim();if(!v)return'Enter your policy number';return /^[A-Z]{2}-\d{7}$/.test(v)?'':'Enter a valid policy number (e.g. PA-1234567)'},
+    address:function(){var v=st.address.trim();if(!v)return'Enter your address';return v.length>100?'Address must be 100 characters or fewer':''},
+    street:function(){var v=st.street.trim();if(!v)return'Enter your street name';return v.length>100?'Street must be 100 characters or fewer':''},
+    zip:function(){var v=st.zip.trim();if(!v)return'Enter your ZIP code';var re=bug?/^\d{5,6}$/:/^\d{5}$/;return re.test(v)?'':'Enter a valid 5-digit ZIP code'},
+    dob:function(){var v=st.dob.trim();if(!v)return'Enter your date of birth';var d=realDate(v);if(!d)return'Enter a valid date of birth';
+      if(!bug&&d>new Date())return'Enter a valid date of birth';if(!bug&&ageOf(d)<18)return'You must be at least 18 years old';return''},
+    cat:function(){return st.cat?'':'Select a category'},
+    sub:function(){return st.sub?'':'Select a sub category'},
+    file:function(){
+      var f=st.file;if(!f)return'Upload a PDF, PNG or JPG file up to 10 MB.';
+      var ext=(f.name.split('.').pop()||'').toLowerCase();var limit=(bug?12:10)*1024*1024;
+      if(['pdf','png','jpg','jpeg'].indexOf(ext)<0||f.size===0||f.size>limit)return'Upload a PDF, PNG or JPG file up to 10 MB.';return''},
+    comments:function(){var max=bug?520:500;return st.comments.length>max?'Comments must be 500 characters or fewer':''}
+  };
+
+  /* ---------- screens ---------- */
+  function header(){
+    return '<header class="top"><div class="brand"><span class="mark">M</span>Meridian Insurance</div>'+
+      (st.step>1?'<div class="user">Alex Morgan '+AVATAR+'</div>':'')+'</header>';
+  }
+  function stepper(){
+    var labels=['Sign in','Policy details',bug?'Uplaod':'Upload','Success'];
+    return '<nav class="stepper" aria-label="Progress">'+labels.map(function(l,i){
+      var n=i+1,cls=n<st.step?'done':n===st.step?'cur':'';
+      return (i?'<span class="bar '+(n<=st.step?'done':'')+'"></span>':'')+'<span class="st '+cls+'"><span class="dot">'+(n<st.step?'&#10003;':n)+'</span>'+l+'</span>';
+    }).join('')+'</nav>';
+  }
+  function support(){
+    var img=bug?'<img src="assets/support-agent.jpg" alt="Support agent photo" data-testid="support-photo">':'<img src="'+AGENT_URI+'" alt="Support agent photo" data-testid="support-photo">';
+    return '<aside class="side">'+img+'<h3>Need help?</h3><p>Call 1-800-555-0199</p></aside>';
+  }
+
+  function s1(){
+    return header()+'<div class="split"><section class="hero" aria-label="Welcome">'+HERO+'<div class="veil"></div><div class="copy"><h2>Your policy, one sign-in away.</h2><p>View coverage, pay your premium and upload documents from one secure portal.</p></div></section>'+
+    '<main class="loginwrap"><form class="loginform" id="f1" novalidate><h1>Sign in</h1><p class="sub">Enter your username and password to continue.</p>'+
+    '<div class="alert" id="login-alert" role="alert" hidden><span>&#9888;</span><span>Incorrect user name or password. Please try again.</span></div>'+
+    field('u','Username',{ph:'Enter your username',help:'Use the username you registered with',val:st.u})+
+    field('p','Password',{kind:'password',ph:'Enter your password',help:'Passwords are case sensitive',val:st.p})+
+    '<button class="btn full" type="submit" id="signin" data-testid="signin">Sign in</button>'+
+    '<div class="row-links"><a href="#" id="forgot">Forgot password?</a><span>Need help? 1-800-555-0199</span></div></form></main></div>';
+  }
+  function s2(){
+    var subOpts=bug?ALLSUB:(CATS[st.cat]||[]);
+    return header()+'<div class="flow">'+stepper()+'<div class="layout"><form class="card" id="f2" novalidate><h2>Policy details</h2><div class="grid2">'+
+      field('policy',bug?'Polcy Number':'Policy Number',{ph:'e.g. PA-1234567',help:'Found on your policy documents',val:st.policy})+
+      field('address','Address',{ph:'House or flat number',help:'House or flat number and name',val:st.address})+
+      (bug?'':field('street','Street',{ph:'Street name',help:'Street name',val:st.street}))+
+      field('zip','Zip Code',{ph:'e.g. 75201',help:'Enter a 5-digit ZIP code',val:st.zip})+
+      field('dob','Date of Birth',{ph:'MM/DD/YYYY',help:'Format MM/DD/YYYY',val:st.dob})+
+      field('age','Age',{req:false,ph:'Calculated automatically',help:'Calculated from date of birth',readonly:!bug,val:st.age})+
+      field('cat','Category',{kind:'select',ph:'Select a category',help:'Choose a category',opts:Object.keys(CATS),val:st.cat})+
+      field('sub','Sub Category',{kind:'select',ph:'Select a sub category',help:'Select a category first',opts:subOpts,val:st.sub,disabled:!bug&&!st.cat})+
+      '</div><div class="actions"><button class="btn ghost" type="button" id="back" data-testid="back">Back</button><button class="btn" type="submit" id="next" data-testid="next">Next</button></div></form>'+support()+'</div></div>';
+  }
+  function fileChip(){
+    if(!st.file)return '';
+    var kb=st.file.size>=1048576?(st.file.size/1048576).toFixed(1)+' MB':Math.max(1,Math.round(st.file.size/1024))+' KB';
+    return '<div class="chip" id="chip"><span class="thumb">'+FILEICON+'</span><span class="nm">'+esc(st.file.name)+'<small>'+kb+'</small></span><button type="button" id="rm">Remove</button></div>';
+  }
+  function s3(){
+    var drop='<div class="field" data-field="file"><span class="lbl">Upload file<span class="req"> *</span></span>'+
+      '<div class="drop" id="drop" role="button" tabindex="0" aria-label="Upload file"><strong>Drag a file here or browse.</strong><span>PDF, PNG or JPG only. Max 10 MB.</span><div class="types"><i>PDF</i><i>PNG</i><i>JPG</i></div></div>'+
+      '<input class="vh" type="file" id="file" name="file" data-testid="file" accept=".pdf,.png,.jpg,.jpeg"><div id="chipwrap">'+fileChip()+'</div>'+
+      '<p class="help" id="file-help" data-help="PDF, PNG or JPG only. Max 10 MB."></p></div>';
+    var cm=field('comments','Comments',{kind:'textarea',req:false,ph:'Add any details about your submission',help:'Optional',val:st.comments,extra:'<span class="counter" id="cnt">'+st.comments.length+' / 500</span>'});
+    return header()+'<div class="flow">'+stepper()+'<div class="layout"><form class="card" id="f3" novalidate><h2>Upload</h2>'+drop+cm+
+      '<div class="actions"><button class="btn ghost" type="button" id="back" data-testid="back">Back</button><button class="btn" type="submit" id="submit" data-testid="submit">Submit</button></div></form>'+support()+'</div></div>';
+  }
+  function s4(){
+    return header()+'<div class="flow">'+stepper()+'<main class="card done-card">'+CHECK+'<h1 data-testid="success-title">'+(bug?'Submision recieved':'Submission received')+'</h1>'+
+      '<p class="sub">Your documents were uploaded. We will review them within 2 business days.</p><span class="ref">Reference MP-'+(100000+Math.floor(Math.random()*899999))+'</span><br>'+
+      '<button class="btn" type="button" id="home" data-testid="home">Back to home</button></main></div>';
+  }
+
+  /* ---------- wiring ---------- */
+  function render(){
+    var app=$('#app');app.innerHTML=[null,s1,s2,s3,s4][st.step]();
+    window.scrollTo(0,0);
+    if(st.step===1){
+      bind('u','u');bind('p','p');
+      $('#pw-toggle').addEventListener('click',function(){var i=$('#p');var show=i.type==='password';i.type=show?'text':'password';this.textContent=show?'Hide':'Show';this.setAttribute('aria-label',show?'Hide password':'Show password')});
+      $('#forgot').addEventListener('click',function(e){e.preventDefault()});
+      $('#f1').addEventListener('submit',function(e){
+        e.preventDefault();$('#login-alert').hidden=true;
+        if(!firstBad(['u','p']))return;
+        if(st.u.trim().toLowerCase()==='alex.morgan'&&st.p==='Pass@1234'){st.step=2;render()}
+        else{
+          $('#login-alert').hidden=false;
+          setErr('u','Check your user name');setErr('p','Check your password');
+        }
+      });
+    }
+    if(st.step===2){
+      bind('policy','policy',function(el){var v=el.value.toUpperCase();if(v!==el.value){el.value=v}st.policy=v});
+      bind('address','address');bind('street','street');bind('zip','zip');
+      bind('dob','dob',function(el){
+        var d=realDate(el.value.trim());var a=$('#age');
+        if(d&&(bug||d<=new Date())){st.age=String(ageOf(d))}else{st.age=''}
+        a.value=st.age;
+      });
+      var age=$('#age');if(bug)age.addEventListener('input',function(){st.age=age.value});
+      var cat=$('#cat'),sub=$('#sub');
+      cat.addEventListener('change',function(){
+        st.cat=cat.value;st.sub='';
+        var opts=bug?ALLSUB:(CATS[st.cat]||[]);
+        sub.innerHTML='<option value="">Select a sub category</option>'+opts.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join('');
+        sub.disabled=!bug&&!st.cat;
+        setErr('cat',V.cat());
+      });
+      sub.addEventListener('change',function(){st.sub=sub.value;setErr('sub',V.sub())});
+      cat.addEventListener('blur',function(){setErr('cat',V.cat())});
+      sub.addEventListener('blur',function(){if(!sub.disabled)setErr('sub',V.sub())});
+      $('#back').addEventListener('click',function(){st.step=1;render()});
+      $('#f2').addEventListener('submit',function(e){
+        e.preventDefault();
+        var ids=['policy','address'].concat(bug?[]:['street'],['zip','dob','cat','sub']);
+        if(firstBad(ids)){st.step=3;render()}
+      });
+    }
+    if(st.step===3){
+      var fi=$('#file'),drop=$('#drop');
+      function pick(f){st.file=f||null;$('#chipwrap').innerHTML=fileChip();wireChip();setErr('file',f?V.file():'')}
+      function wireChip(){var rm=$('#rm');if(rm)rm.addEventListener('click',function(){fi.value='';pick(null)})}
+      drop.addEventListener('click',function(){fi.click()});
+      drop.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fi.click()}});
+      drop.addEventListener('dragover',function(e){e.preventDefault()});
+      drop.addEventListener('drop',function(e){e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files[0];if(f)pick(f)});
+      fi.addEventListener('change',function(){pick(fi.files[0])});
+      wireChip();
+      var cm=$('#comments');
+      cm.addEventListener('input',function(){st.comments=cm.value;$('#cnt').textContent=cm.value.length+' / 500'});
+      cm.addEventListener('blur',function(){setErr('comments',V.comments())});
+      $('#back').addEventListener('click',function(){st.step=2;render()});
+      $('#f3').addEventListener('submit',function(e){
+        e.preventDefault();
+        var a=setErr('file',V.file()),b=setErr('comments',V.comments());
+        if(!a){drop.focus();return}
+        if(!b){cm.focus();return}
+        st.step=4;render();
+      });
+    }
+    if(st.step===4){
+      $('#home').addEventListener('click',function(){
+        st={step:1,u:'',p:'',policy:'',address:'',street:'',zip:'',dob:'',age:'',cat:'',sub:'',file:null,comments:''};render();
+      });
+    }
+  }
+
+  /* ---------- tester bar ---------- */
+  function bar(){
+    $('#m-clean').setAttribute('aria-pressed',String(!bug));$('#m-bug').setAttribute('aria-pressed',String(bug));
+    $('#key').innerHTML='<div style="max-width:1040px;margin:0 auto"><p style="margin:0">Test login: <code>alex.morgan</code> / <code>Pass@1234</code>. Any other valid-format pair shows the incorrect login error.</p>'+
+      (bug?'<ol>'+DEFECTS.map(function(d){return '<li><b>'+d[0]+':</b> '+esc(d[1])+'</li>'}).join('')+'</ol>':'<p style="margin:8px 0 0">Clean build: the page matches the design and the user story. Switch to Seeded defects to get '+DEFECTS.length+' known problems to find.</p>')+'</div>';
+  }
+  function setBug(v){
+    bug=v;try{localStorage.setItem('mpp-bug',v?'1':'0')}catch(e){}
+    st.step=1;st.u='';st.p='';bar();render();
+  }
+  $('#m-clean').addEventListener('click',function(){setBug(false)});
+  $('#m-bug').addEventListener('click',function(){setBug(true)});
+  bar();render();
+})();
+</script>
+
+</body>
+</html>
